@@ -41,23 +41,23 @@
       .prose td { border: 1px solid rgba(63, 63, 70, 0.5); padding: 8px 12px; }
     </style>
     <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "@google/genai": "https://esm.sh/@google/genai@1.3.0",
-    "react-markdown": "https://esm.sh/react-markdown@9.0.1?bundle",
-    "remark-gfm": "https://esm.sh/remark-gfm@4.0.0?bundle",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/"
-  }
-}
-</script>
+    {
+      "imports": {
+        "react": "https://esm.sh/react@19.0.0",
+        "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+        "@google/genai": "https://esm.sh/@google/genai@1.3.0",
+        "react-markdown": "https://esm.sh/react-markdown@9.0.1?bundle",
+        "remark-gfm": "https://esm.sh/remark-gfm@4.0.0?bundle"
+      }
+    }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
-    <!-- Babel을 사용하여 브라우저에서 직접 TSX를 해석할 수 있게 하거나, 
-         환경이 지원하지 않을 경우를 대비해 스크립트 실행 순서를 보장합니다. -->
+    <div id="root">
+      <div style="height: 100vh; display: flex; align-items: center; justify-content: center; color: #52525b; font-size: 0.875rem;">
+        시스템을 초기화 중입니다...
+      </div>
+    </div>
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>
