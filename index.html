@@ -3,21 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NEXTCODEAI | Next-Gen Intelligence</title>
+    <title>NEXTCODEAI | Next-Gen AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script>
-      // 1. 전역 에러 핸들러 (모듈 로드 실패 대비)
-      window.addEventListener('error', function(e) {
-        console.error('Global Error:', e);
+      // 1. 전역 에러 캡처 (모듈 로드 에러 확인용)
+      window.onerror = function(msg, url, lineNo, columnNo, error) {
+        console.error('Global Error:', msg, error);
         const log = document.getElementById('error-log');
-        if (log) log.innerText = '실행 오류: ' + (e.message || '라이브러리 로딩 실패');
-      }, true);
+        if (log) log.innerText = '실행 오류: ' + msg;
+        return false;
+      };
 
-      // 2. SDK용 process 객체 미리 정의
+      // 2. SDK용 전역 객체 선제 정의
       window.process = { env: { API_KEY: "" } };
+      window.global = window;
     </script>
     <style>
       body {
@@ -42,45 +44,46 @@
         z-index: 9999;
       }
       .spinner {
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(99, 102, 241, 0.1);
-        border-top: 3px solid #6366f1;
+        width: 32px;
+        height: 32px;
+        border: 2px solid rgba(99, 102, 241, 0.1);
+        border-top: 2px solid #6366f1;
         border-radius: 50%;
-        animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        animation: spin 0.8s linear infinite;
         margin-bottom: 20px;
       }
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
       
       .glass {
-        background: rgba(9, 9, 11, 0.7);
+        background: rgba(9, 9, 11, 0.8);
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.05);
       }
       
-      /* 스크롤바 */
-      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar { width: 4px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: #1f1f23; border-radius: 10px; }
     </style>
     <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@19.0.0",
-        "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-        "@google/genai": "https://esm.sh/@google/genai@1.3.0",
-        "react-markdown": "https://esm.sh/react-markdown@9.0.1?bundle&deps=react@19.0.0",
-        "remark-gfm": "https://esm.sh/remark-gfm@4.0.0?bundle&deps=react@19.0.0"
-      }
-    }
-    </script>
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "@google/genai": "https://esm.sh/@google/genai@1.3.0?deps=react@19.0.0",
+    "react-markdown": "https://esm.sh/react-markdown@9.0.1?bundle&deps=react@19.0.0",
+    "remark-gfm": "https://esm.sh/remark-gfm@4.0.0?bundle&deps=react@19.0.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
   </head>
   <body>
     <div id="root"></div>
     <div class="loading-screen">
       <div class="spinner"></div>
-      <div id="status-text" class="text-zinc-500 text-sm font-medium tracking-tight">NEXTCODEAI 초기화 중...</div>
-      <div id="error-log" class="mt-4 text-red-500/80 text-xs font-mono max-w-xs text-center px-4"></div>
+      <div id="status-text" class="text-zinc-500 text-xs font-mono uppercase tracking-widest">NEXTCODEAI SYSTEM INITIALIZING</div>
+      <div id="error-log" class="mt-4 text-red-500/80 text-[10px] font-mono max-w-xs text-center px-4"></div>
     </div>
     <script type="module" src="./index.tsx"></script>
   </body>
