@@ -16,22 +16,11 @@
         margin: 0;
         overflow-x: hidden;
       }
-      .font-mono {
-        font-family: 'Fira Code', monospace;
-      }
-      ::-webkit-scrollbar {
-        width: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #27272a;
-        border-radius: 10px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #3f3f46;
-      }
+      .font-mono { font-family: 'Fira Code', monospace; }
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
       .glass {
         background: rgba(15, 15, 18, 0.8);
         backdrop-filter: blur(16px);
@@ -41,36 +30,15 @@
         0%, 100% { opacity: 0.3; transform: scale(1); }
         50% { opacity: 0.6; transform: scale(1.1); }
       }
-      .animate-glow {
-        animation: glow 4s ease-in-out infinite;
-      }
-      .message-appear {
-        animation: slideUp 0.3s ease-out forwards;
-      }
+      .animate-glow { animation: glow 4s ease-in-out infinite; }
+      .message-appear { animation: slideUp 0.3s ease-out forwards; }
       @keyframes slideUp {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
       }
-      /* Markdown Table Styles */
-      .prose table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 1rem 0;
-        font-size: 0.9rem;
-      }
-      .prose th {
-        background-color: rgba(39, 39, 42, 0.5);
-        border: 1px solid rgba(63, 63, 70, 0.5);
-        padding: 8px 12px;
-        text-align: left;
-      }
-      .prose td {
-        border: 1px solid rgba(63, 63, 70, 0.5);
-        padding: 8px 12px;
-      }
-      .prose tr:nth-child(even) {
-        background-color: rgba(24, 24, 27, 0.3);
-      }
+      .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+      .prose th { background-color: rgba(39, 39, 42, 0.5); border: 1px solid rgba(63, 63, 70, 0.5); padding: 8px 12px; text-align: left; }
+      .prose td { border: 1px solid rgba(63, 63, 70, 0.5); padding: 8px 12px; }
     </style>
     <script type="importmap">
 {
@@ -88,6 +56,8 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Babel을 사용하여 브라우저에서 직접 TSX를 해석할 수 있게 하거나, 
+         환경이 지원하지 않을 경우를 대비해 스크립트 실행 순서를 보장합니다. -->
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>
