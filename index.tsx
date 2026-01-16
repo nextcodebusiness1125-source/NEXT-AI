@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI } from '@google/genai';
@@ -447,5 +446,15 @@ const App = () => {
   );
 };
 
-const container = document.getElementById('root');
-if (container) createRoot(container).render(<App />);
+const init = () => {
+  const container = document.getElementById('root');
+  if (container) {
+    createRoot(container).render(<App />);
+  }
+};
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  init();
+} else {
+  document.addEventListener('DOMContentLoaded', init);
+}
