@@ -1,8 +1,19 @@
-/**
- * Browser Compatibility Guard
- * 브라우저 환경에서 process.env 참조 시 발생하는 ReferenceError를 방지합니다.
- */
-if (typeof window !== 'undefined' && typeof (window as any).process === 'undefined') {
+// 1. 전역 에러 핸들러 (디버깅용)
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+  console.error('Fatal Error: ', msg, error);
+  const root = document.getElementById('root');
+  if (root && root.innerText.includes('초기화')) {
+    root.innerHTML = `<div style="padding: 20px; color: #f87171; font-family: sans-serif; font-size: 14px;">
+      <b>애플리케이션 실행 오류가 발생했습니다.</b><br/>
+      ${msg}<br/>
+      <small style="color: #52525b;">개발자 도구(F12)의 Console 탭을 확인해주세요.</small>
+    </div>`;
+  }
+  return false;
+};
+
+// 2. Browser Environment Polyfill (Gemini SDK 대응)
+if (typeof window !== 'undefined' && !(window as any).process) {
   (window as any).process = { env: { API_KEY: '' } };
 }
 
@@ -168,7 +179,7 @@ const AuthView = ({ onLogin }: { onLogin: (user: User) => void }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[#09090b] selection:bg-indigo-500/30">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-[#09090b]">
        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[150px] rounded-full"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/10 blur-[150px] rounded-full"></div>
@@ -262,43 +273,37 @@ const App = () => {
     setIsTyping(true);
 
     try {
-      const apiKey = (process.env as any).API_KEY;
-      if (!apiKey) throw new Error("API_KEY is not configured.");
-      
-      const ai = new GoogleGenAI({ apiKey });
+      // process.env.API_KEY는 환경 변수 주입 시에만 유효합니다.
+      const apiKey = (window as any).process?.env?.API_KEY || (process?.env?.API_KEY);
+      const ai = new GoogleGenAI({ apiKey: apiKey || '' });
       const chat = ai.chats.create({
         model: "gemini-3-flash-preview",
-        config: { systemInstruction: `당신은 NEXT AI입니다. 마크다운 형식을 잘 활용하여 읽기 쉽고 정확한 답변을 제공합니다. 특히 표(Table), 리스트, 코드 블록을 적절히 사용하여 정보를 시각화하세요.` }
+        config: { systemInstruction: `당신은 NEXT AI입니다. 사용자의 질문에 전문적이고 친절하게 답변하세요.` }
       });
 
       const result = await chat.sendMessageStream({ message: currentInput });
       let fullText = "";
       for await (const chunk of result) {
-        const text = chunk.text;
-        if (text) {
-          fullText += text;
-          setSessions(prev => prev.map(s => {
-            if (s.id === activeSessionId) {
-              const msgs = [...s.messages];
-              const lastIdx = msgs.length - 1;
-              if (msgs[lastIdx]?.role === 'assistant') {
-                msgs[lastIdx] = { ...msgs[lastIdx], content: fullText };
-              }
-              return { ...s, messages: msgs };
-            }
-            return s;
-          }));
-        }
+        fullText += chunk.text;
+        setSessions(prev => prev.map(s => {
+          if (s.id === activeSessionId) {
+            const msgs = [...s.messages];
+            msgs[msgs.length - 1] = { ...msgs[msgs.length - 1], content: fullText };
+            return { ...s, messages: msgs };
+          }
+          return s;
+        }));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      const errorMsg = error.message?.includes('API_KEY') 
+        ? "API 키 설정이 필요합니다. 환경 변수를 확인해주세요." 
+        : "오류가 발생했습니다. 다시 시도해주세요.";
+        
       setSessions(prev => prev.map(s => {
         if (s.id === activeSessionId) {
           const msgs = [...s.messages];
-          const lastIdx = msgs.length - 1;
-          if (msgs[lastIdx]?.role === 'assistant') {
-            msgs[lastIdx] = { ...msgs[lastIdx], content: "죄송합니다. 서비스 설정에 문제가 발생했습니다. API 키가 환경 변수로 올바르게 등록되었는지 확인해주세요." };
-          }
+          msgs[msgs.length - 1] = { ...msgs[msgs.length - 1], content: errorMsg };
           return { ...s, messages: msgs };
         }
         return s;
@@ -340,86 +345,72 @@ const App = () => {
     <div className="flex h-screen w-full bg-[#0c0c0e] text-zinc-100 overflow-hidden relative">
       {showShareToast && (
         <div className="absolute top-10 left-1/2 -translate-x-1/2 z-[100] bg-indigo-600 text-white px-6 py-3 rounded-2xl shadow-2xl font-bold animate-in fade-in slide-in-from-top-4 duration-300">
-          URL이 클립보드에 복사되었습니다! 🚀
+          URL 복사됨! 🚀
         </div>
       )}
 
-      <aside className="hidden md:flex flex-col w-72 border-r border-zinc-800/50 bg-[#09090b] relative z-20">
+      <aside className="hidden md:flex flex-col w-72 border-r border-zinc-800/50 bg-[#09090b] z-20">
         <div className="p-7 flex items-center gap-3">
-          <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20"><LogoIcon className="w-5 h-5 text-white" /></div>
-          <h1 className="text-lg font-bold tracking-tight text-white">NEXT AI</h1>
+          <div className="p-2 bg-indigo-600 rounded-xl"><LogoIcon className="w-5 h-5 text-white" /></div>
+          <h1 className="text-lg font-bold text-white">NEXT AI</h1>
         </div>
 
-        <button onClick={createNewSession} className="mx-4 mb-6 flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 transition-all group active:scale-[0.98]">
-          <PlusIcon className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
-          <span className="text-sm font-semibold text-zinc-400 group-hover:text-white transition-colors">새로운 대화</span>
+        <button onClick={createNewSession} className="mx-4 mb-6 flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl border border-zinc-800 hover:bg-zinc-900 transition-all">
+          <PlusIcon className="w-4 h-4 text-zinc-400" />
+          <span className="text-sm font-semibold text-zinc-400">새로운 대화</span>
         </button>
 
-        <div className="flex-1 overflow-y-auto px-3 space-y-1.5 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-3 space-y-1.5">
           {sessions.map(session => (
-            <div key={session.id} onClick={() => setActiveSessionId(session.id)} className={`group flex items-center justify-between p-3.5 rounded-xl cursor-pointer transition-all ${activeSessionId === session.id ? 'bg-zinc-900 border border-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40'}`}>
+            <div key={session.id} onClick={() => setActiveSessionId(session.id)} className={`group flex items-center justify-between p-3.5 rounded-xl cursor-pointer transition-all ${activeSessionId === session.id ? 'bg-zinc-900 border border-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40'}`}>
               <div className="flex items-center gap-3 overflow-hidden">
                 <MessageIcon className={`w-4 h-4 flex-shrink-0 ${activeSessionId === session.id ? 'text-indigo-400' : 'text-zinc-600'}`} />
                 <span className="text-sm truncate font-medium">{session.title}</span>
               </div>
-              <button onClick={(e) => deleteSession(e, session.id)} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-zinc-800 rounded-lg transition-all">
+              <button onClick={(e) => deleteSession(e, session.id)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-800 rounded">
                 <TrashIcon className="w-3.5 h-3.5 text-zinc-500 hover:text-red-400" />
               </button>
             </div>
           ))}
         </div>
 
-        <div className="p-5 border-t border-zinc-800/50 flex flex-col gap-4 bg-zinc-950/30">
+        <div className="p-5 border-t border-zinc-800/50 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-900 flex items-center justify-center text-[11px] font-black text-white shadow-xl">
+               <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-[11px] font-black text-white">
                   {user.username.slice(0, 2).toUpperCase()}
                </div>
-               <div className="flex flex-col">
-                 <span className="text-sm font-semibold truncate text-zinc-300">{user.username}</span>
-                 <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Professional</span>
-               </div>
+               <span className="text-sm font-semibold truncate text-zinc-300">{user.username}</span>
             </div>
             <div className="flex gap-1">
-              <button onClick={handleShare} className="p-2.5 hover:bg-zinc-900 rounded-xl text-zinc-600 hover:text-indigo-400 transition-all" title="공유하기">
-                 <ShareIcon className="w-4.5 h-4.5" />
-              </button>
-              <button onClick={() => { sessionStorage.clear(); window.location.reload(); }} className="p-2.5 hover:bg-zinc-900 rounded-xl text-zinc-600 hover:text-red-400 transition-all" title="로그아웃">
-                 <LogOutIcon className="w-4.5 h-4.5" />
-              </button>
+              <button onClick={handleShare} className="p-2 hover:bg-zinc-900 rounded-lg text-zinc-600 hover:text-indigo-400"><ShareIcon className="w-4 h-4" /></button>
+              <button onClick={() => { sessionStorage.clear(); window.location.reload(); }} className="p-2 hover:bg-zinc-900 rounded-lg text-zinc-600 hover:text-red-400"><LogOutIcon className="w-4 h-4" /></button>
             </div>
           </div>
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col relative h-full bg-[#0c0c0e]">
-        <div className="absolute top-0 left-1/4 w-full h-full bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none opacity-50"></div>
-        
+      <main className="flex-1 flex flex-col relative bg-[#0c0c0e]">
         <div className="flex-1 overflow-y-auto px-4 py-8 md:p-12 space-y-10 max-w-4xl mx-auto w-full custom-scrollbar">
           {(!activeSession || activeSession.messages.length === 0) ? (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-8 animate-appear">
-              <div className="p-8 bg-indigo-600/5 rounded-[2.5rem] border border-indigo-500/10 animate-glow shadow-inner">
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
+              <div className="p-8 bg-indigo-600/5 rounded-[2.5rem] border border-indigo-500/10 animate-glow">
                 <LogoIcon className="w-20 h-20 text-indigo-500" />
               </div>
               <div>
-                <h2 className="text-4xl font-black text-white mb-3 tracking-tight">반갑습니다, {user.username}님.</h2>
-                <p className="text-zinc-500 text-lg font-medium leading-relaxed">무엇이든 물어보세요. NEXT AI가 답변해 드립니다.</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-lg">
-                {["우주의 기원에 대해 설명해줘", "생산성을 높이는 5가지 팁", "오늘 저녁 메뉴 추천해줘", "최신 인공지능 트렌드 알려줘"].map(txt => (
-                  <button key={txt} onClick={() => setInputValue(txt)} className="p-4 rounded-2xl border border-zinc-800/50 bg-zinc-900/20 hover:bg-zinc-900/50 hover:border-zinc-700 text-sm text-left text-zinc-500 hover:text-white transition-all">"{txt}"</button>
-                ))}
+                <h2 className="text-4xl font-black text-white mb-3">반갑습니다, {user.username}님.</h2>
+                <p className="text-zinc-500 text-lg">무엇이든 물어보세요. NEXT AI가 답변해 드립니다.</p>
               </div>
             </div>
           ) : (
             activeSession.messages.map((msg) => (
               <div key={msg.id} className={`flex gap-5 md:gap-7 ${msg.role === 'user' ? 'flex-row-reverse' : ''} message-appear`}>
-                <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center shadow-lg ${msg.role === 'user' ? 'bg-zinc-800 border border-zinc-700' : 'bg-indigo-600 shadow-indigo-600/20'}`}>
+                <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${msg.role === 'user' ? 'bg-zinc-800 border border-zinc-700' : 'bg-indigo-600'}`}>
                   {msg.role === 'user' ? <span className="text-[9px] font-black text-zinc-400">YOU</span> : <LogoIcon className="w-5 h-5 text-white" />}
                 </div>
                 <div className={`max-w-[88%] space-y-2 ${msg.role === 'user' ? 'text-right' : ''}`}>
-                  <div className={`inline-block w-full ${msg.role === 'user' ? 'bg-zinc-900/50 px-6 py-4 rounded-[1.5rem] border border-zinc-800 ml-auto w-auto text-zinc-200' : ''}`}>
-                    <MarkdownRenderer content={msg.content || (isTyping && activeSession.messages[activeSession.messages.length - 1].id === msg.id ? '생각 중...' : '')} />
+                  <div className={`inline-block w-full ${msg.role === 'user' ? 'bg-zinc-900/50 px-6 py-4 rounded-[1.5rem] border border-zinc-800 ml-auto w-auto' : ''}`}>
+                    <MarkdownRenderer content={msg.content || '...'} />
                   </div>
                 </div>
               </div>
@@ -428,34 +419,29 @@ const App = () => {
           <div ref={messagesEndRef} className="h-2" />
         </div>
 
-        <div className="p-5 md:p-10 pt-0 max-w-4xl mx-auto w-full z-10">
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-cyan-600 rounded-[1.8rem] blur opacity-10 group-focus-within:opacity-25 transition duration-500"></div>
-            <div className="relative flex items-end gap-3 p-3.5 bg-[#09090b] border border-zinc-800 rounded-[1.8rem] shadow-2xl focus-within:border-zinc-600 transition-all">
-              <textarea
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                placeholder="어떤 것이든 물어보세요..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-zinc-200 resize-none py-3 px-4 text-[15px] min-h-[56px] max-h-[300px] outline-none placeholder-zinc-700 custom-scrollbar"
-                rows={1}
-                onInput={(e: any) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
-              />
-              <button onClick={handleSendMessage} disabled={!inputValue.trim() || isTyping} className={`p-4 rounded-2xl flex items-center justify-center transition-all shadow-lg ${inputValue.trim() && !isTyping ? 'bg-indigo-600 text-white hover:bg-indigo-500 active:scale-95 shadow-indigo-600/20' : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}`}>
-                <SendIcon className="w-5 h-5" />
-              </button>
-            </div>
+        <div className="p-5 md:p-10 pt-0 max-w-4xl mx-auto w-full">
+          <div className="relative group flex items-end gap-3 p-3.5 bg-[#09090b] border border-zinc-800 rounded-[1.8rem] focus-within:border-zinc-600">
+            <textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+              placeholder="질문을 입력하세요..."
+              className="flex-1 bg-transparent border-none focus:ring-0 text-zinc-200 resize-none py-3 px-4 outline-none min-h-[56px]"
+              rows={1}
+            />
+            <button onClick={handleSendMessage} disabled={!inputValue.trim() || isTyping} className={`p-4 rounded-2xl ${inputValue.trim() && !isTyping ? 'bg-indigo-600 text-white' : 'bg-zinc-800 text-zinc-600'}`}>
+              <SendIcon className="w-5 h-5" />
+            </button>
           </div>
-          <p className="mt-4 text-center text-[10px] text-zinc-700 font-bold uppercase tracking-[0.2em]">Next-Generation Intelligence Interface</p>
+          <p className="mt-4 text-center text-[10px] text-zinc-700 font-bold uppercase tracking-widest">Next-Generation Intelligence</p>
         </div>
       </main>
     </div>
   );
 };
 
-// --- Initializer ---
+// --- Initialization ---
 const container = document.getElementById('root');
 if (container) {
-  const root = createRoot(container);
-  root.render(<App />);
+  createRoot(container).render(<App />);
 }
