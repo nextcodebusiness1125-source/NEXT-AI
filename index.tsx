@@ -1,3 +1,11 @@
+/**
+ * Browser Compatibility Guard
+ * 브라우저 환경에서 process.env 참조 시 발생하는 ReferenceError를 방지합니다.
+ */
+if (typeof window !== 'undefined' && typeof (window as any).process === 'undefined') {
+  (window as any).process = { env: { API_KEY: '' } };
+}
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI } from '@google/genai';
@@ -254,7 +262,10 @@ const App = () => {
     setIsTyping(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const apiKey = (process.env as any).API_KEY;
+      if (!apiKey) throw new Error("API_KEY is not configured.");
+      
+      const ai = new GoogleGenAI({ apiKey });
       const chat = ai.chats.create({
         model: "gemini-3-flash-preview",
         config: { systemInstruction: `당신은 NEXT AI입니다. 마크다운 형식을 잘 활용하여 읽기 쉽고 정확한 답변을 제공합니다. 특히 표(Table), 리스트, 코드 블록을 적절히 사용하여 정보를 시각화하세요.` }
@@ -286,7 +297,7 @@ const App = () => {
           const msgs = [...s.messages];
           const lastIdx = msgs.length - 1;
           if (msgs[lastIdx]?.role === 'assistant') {
-            msgs[lastIdx] = { ...msgs[lastIdx], content: "죄송합니다. 오류가 발생했습니다. API 키 설정을 확인하거나 나중에 다시 시도해주세요." };
+            msgs[lastIdx] = { ...msgs[lastIdx], content: "죄송합니다. 서비스 설정에 문제가 발생했습니다. API 키가 환경 변수로 올바르게 등록되었는지 확인해주세요." };
           }
           return { ...s, messages: msgs };
         }
@@ -327,14 +338,12 @@ const App = () => {
 
   return (
     <div className="flex h-screen w-full bg-[#0c0c0e] text-zinc-100 overflow-hidden relative">
-      {/* Share Toast */}
       {showShareToast && (
         <div className="absolute top-10 left-1/2 -translate-x-1/2 z-[100] bg-indigo-600 text-white px-6 py-3 rounded-2xl shadow-2xl font-bold animate-in fade-in slide-in-from-top-4 duration-300">
           URL이 클립보드에 복사되었습니다! 🚀
         </div>
       )}
 
-      {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-72 border-r border-zinc-800/50 bg-[#09090b] relative z-20">
         <div className="p-7 flex items-center gap-3">
           <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20"><LogoIcon className="w-5 h-5 text-white" /></div>
@@ -383,7 +392,6 @@ const App = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col relative h-full bg-[#0c0c0e]">
         <div className="absolute top-0 left-1/4 w-full h-full bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none opacity-50"></div>
         
@@ -420,7 +428,6 @@ const App = () => {
           <div ref={messagesEndRef} className="h-2" />
         </div>
 
-        {/* Input Area */}
         <div className="p-5 md:p-10 pt-0 max-w-4xl mx-auto w-full z-10">
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-cyan-600 rounded-[1.8rem] blur opacity-10 group-focus-within:opacity-25 transition duration-500"></div>
@@ -446,15 +453,9 @@ const App = () => {
   );
 };
 
-const init = () => {
-  const container = document.getElementById('root');
-  if (container) {
-    createRoot(container).render(<App />);
-  }
-};
-
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  init();
-} else {
-  document.addEventListener('DOMContentLoaded', init);
+// --- Initializer ---
+const container = document.getElementById('root');
+if (container) {
+  const root = createRoot(container);
+  root.render(<App />);
 }
