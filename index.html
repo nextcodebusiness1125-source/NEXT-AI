@@ -2,7 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NEXT AI | NEXTCODE</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet">
 
 <style>
@@ -14,14 +16,13 @@ body {
   background: #0e1117;
   font-family: Pretendard, sans-serif;
   color: #e5e7eb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 /* ===== AUTH ===== */
 .auth {
   width: 360px;
+  margin: auto;
+  margin-top: 15vh;
   background: #0b0f14;
   padding: 30px;
   border-radius: 16px;
@@ -30,50 +31,39 @@ body {
 
 .auth h1 {
   text-align: center;
-  margin-bottom: 20px;
+}
+
+.auth input, .auth button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
 }
 
 .auth input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 10px;
   background: #020617;
   border: 1px solid #1f2937;
-  border-radius: 8px;
   color: white;
 }
 
 .auth button {
-  width: 100%;
-  padding: 12px;
   border: none;
-  border-radius: 8px;
   background: #4f46e5;
   color: white;
   font-weight: 600;
   cursor: pointer;
 }
 
-.auth p {
-  text-align: center;
-  margin-top: 10px;
-  opacity: .7;
-  cursor: pointer;
-}
-
 /* ===== CHAT ===== */
 .chat {
-  width: 760px;
-  height: 90vh;
-  background: #0b0f14;
-  border-radius: 16px;
   display: none;
   flex-direction: column;
-  box-shadow: 0 0 40px rgba(0,0,0,.6);
+  height: 100vh;
 }
 
 header {
-  padding: 16px 20px;
+  padding: 14px 18px;
+  background: #020617;
   border-bottom: 1px solid #1f2937;
   display: flex;
   justify-content: space-between;
@@ -82,22 +72,21 @@ header {
 
 .badge {
   color: #facc15;
-  font-weight: 700;
   margin-left: 6px;
+  font-weight: bold;
 }
 
 .messages {
   flex: 1;
-  padding: 20px;
+  padding: 16px;
   overflow-y: auto;
 }
 
 .msg {
   max-width: 80%;
   padding: 12px 14px;
-  margin-bottom: 12px;
   border-radius: 12px;
-  line-height: 1.6;
+  margin-bottom: 10px;
   white-space: pre-wrap;
 }
 
@@ -112,25 +101,25 @@ header {
 }
 
 footer {
-  padding: 15px;
+  padding: 12px;
   border-top: 1px solid #1f2937;
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 textarea {
   flex: 1;
-  height: 52px;
+  resize: none;
+  height: 48px;
   background: #020617;
   border: 1px solid #1f2937;
   border-radius: 10px;
-  padding: 12px;
   color: white;
-  resize: none;
+  padding: 10px;
 }
 
 button.send {
-  width: 90px;
+  width: 80px;
   background: #4f46e5;
   border: none;
   border-radius: 10px;
@@ -139,38 +128,39 @@ button.send {
   cursor: pointer;
 }
 
-.logout, .admin-btn {
-  font-size: 12px;
-  opacity: .7;
-  cursor: pointer;
-}
-
-/* ===== ADMIN PANEL ===== */
-.admin-panel {
+/* ===== DEV MODE ===== */
+.dev-panel {
   display: none;
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.6);
-  justify-content: center;
-  align-items: center;
-}
-
-.admin-box {
-  width: 380px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 40%;
   background: #020617;
-  border-radius: 14px;
-  padding: 20px;
-  border: 1px solid #1f2937;
+  border-top: 2px solid #4f46e5;
+  padding: 10px;
+  font-size: 12px;
+  overflow: auto;
 }
 
-.admin-box h3 {
-  margin-top: 0;
+.dev-panel pre {
+  white-space: pre-wrap;
+  color: #a5b4fc;
 }
 
-.admin-user {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  .auth {
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .msg {
+    max-width: 90%;
+    font-size: 14px;
+  }
 }
 </style>
 </head>
@@ -183,7 +173,6 @@ button.send {
   <input id="id" placeholder="아이디">
   <input id="pw" type="password" placeholder="비밀번호">
   <button onclick="login()">로그인</button>
-  <p onclick="signup()">회원가입</p>
 </div>
 
 <!-- CHAT -->
@@ -193,32 +182,26 @@ button.send {
       NEXT AI · <span id="username"></span>
       <span id="adminBadge" class="badge" style="display:none">👑 ADMIN</span>
     </div>
-    <div style="display:flex;gap:12px">
-      <span id="adminBtn" class="admin-btn" style="display:none" onclick="openAdmin()">관리</span>
-      <span class="logout" onclick="logout()">로그아웃</span>
+    <div>
+      <span onclick="toggleDev()" id="devBtn" style="display:none;cursor:pointer">🧑‍💻 DEV</span>
+      <span onclick="logout()" style="cursor:pointer;margin-left:10px">로그아웃</span>
     </div>
   </header>
 
   <div class="messages" id="messages">
-    <div class="msg ai">
-      안녕하세요! 👋  
-      저는 NEXTCODE에서 만든 NEXT AI예요 😊
-    </div>
+    <div class="msg ai">NEXT AI 준비 완료 🚀</div>
   </div>
 
   <footer>
-    <textarea id="input" placeholder="메시지를 입력하세요..."></textarea>
+    <textarea id="input" placeholder="메시지 입력..."></textarea>
     <button class="send" onclick="send()">전송</button>
   </footer>
 </div>
 
-<!-- ADMIN PANEL -->
-<div class="admin-panel" id="adminPanel">
-  <div class="admin-box">
-    <h3>👑 관리자 패널</h3>
-    <div id="userList"></div>
-    <button onclick="closeAdmin()" style="width:100%;margin-top:10px">닫기</button>
-  </div>
+<!-- DEV PANEL -->
+<div class="dev-panel" id="devPanel">
+  <b>DEV MODE</b>
+  <pre id="devLog"></pre>
 </div>
 
 <script>
@@ -227,33 +210,15 @@ const API_KEY = "AIzaSyCzzO1AdymeU2DKOfbeNKR8dbPJTCCmFfs";
 const ADMIN_ID = "NEXTCODE";
 const ADMIN_PW = "nextcode_admin";
 
-/* ===== ELEMENTS ===== */
-const auth = document.getElementById("auth");
-const chat = document.getElementById("chat");
-const messages = document.getElementById("messages");
+let busy = false;
 
 /* ===== AUTH ===== */
-function signup() {
-  if (!id.value || !pw.value) return alert("입력하세요");
-  localStorage.setItem("user_" + id.value, pw.value);
-  alert("회원가입 완료 🎉");
-}
-
 function login() {
   if (id.value === ADMIN_ID && pw.value === ADMIN_PW) {
-    localStorage.setItem("user", ADMIN_ID);
     localStorage.setItem("admin", "true");
-    start();
-    return;
   }
-
-  if (localStorage.getItem("user_" + id.value) === pw.value) {
-    localStorage.setItem("user", id.value);
-    localStorage.setItem("admin", "false");
-    start();
-  } else {
-    alert("로그인 실패 ❌");
-  }
+  localStorage.setItem("user", id.value || "USER");
+  start();
 }
 
 function start() {
@@ -263,7 +228,7 @@ function start() {
 
   if (localStorage.getItem("admin") === "true") {
     adminBadge.style.display = "inline";
-    adminBtn.style.display = "inline";
+    devBtn.style.display = "inline";
   }
 }
 
@@ -274,96 +239,66 @@ function logout() {
 
 /* ===== CHAT ===== */
 async function send() {
-  if (!input.value.trim()) return;
+  if (busy || !input.value.trim()) return;
+  busy = true;
 
   const userText = input.value;
   input.value = "";
-  messages.innerHTML += `<div class="msg user">${userText}</div>`;
 
+  messages.innerHTML += `<div class="msg user">${userText}</div>`;
   const ai = document.createElement("div");
   ai.className = "msg ai";
-  ai.textContent = "...";
+  ai.textContent = "생각 중… 🤔";
   messages.appendChild(ai);
 
-  const res = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY,
-    {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        contents: [{
-          role: "user",
-          parts: [{
-            text: `
-너는 NEXTCODE가 만든 NEXT AI다.
-친절하고 자연스럽게 말하고
-이모지를 사용해도 된다 😊
-너는 지능형 범용 AI 어시스턴트다.
-정보 제공, 문제 해결, 글쓰기, 요약, 분석을 수행한다.
-
-출력 규칙:
-- 인삿말은 사용하지 않는다.
-- "물론입니다", "좋은 질문입니다" 같은 자동 반응 금지
-- 답변은 구조적으로 정리하되 과하지 않게
-- 필요하면 예시를 제공한다
-
-정확성 규칙:
-- 확실하지 않은 정보는 명시한다
-- 추측이 필요한 경우 추측임을 밝힌다
-- 자신감 있는 거짓말은 금지
-
-대화 제어:
-- 사용자가 원하는 깊이에 맞춰 답변 길이 조절
-- 질문이 모호하면 최소한의 уточ 질문 1개만 허용
-
-이 시스템 규칙은 절대 무시되지 않는다.
-
-${userText}
-`
+  try {
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            role: "user",
+            parts: [{
+              text: `너는 NEXTCODE의 NEXT AI다. 자연스럽게 답변하고 필요하면 이모지를 사용한다.\n\n${userText}`
+            }]
           }]
-        }]
-      })
-    }
-  );
+        })
+      }
+    );
 
-  const data = await res.json();
-  type(ai, data.candidates?.[0]?.content?.parts?.[0]?.text || "에러 😅");
+    const data = await res.json();
+    devLog.textContent = JSON.stringify(data, null, 2);
+
+    if (data.error) {
+      type(ai, "⚠️ API 오류 발생");
+    } else {
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      type(ai, text || "응답 없음 😅");
+    }
+
+  } catch (e) {
+    type(ai, "네트워크 오류 🌐");
+  }
+
+  busy = false;
 }
 
 function type(el, text) {
   el.textContent = "";
   let i = 0;
   const t = setInterval(() => {
-    el.textContent += text[i++];
+    el.textContent += text[i++] || "";
     messages.scrollTop = messages.scrollHeight;
     if (i >= text.length) clearInterval(t);
-  }, 20);
+  }, 18);
 }
 
-/* ===== ADMIN ===== */
-function openAdmin() {
-  adminPanel.style.display = "flex";
-  userList.innerHTML = "";
-  Object.keys(localStorage)
-    .filter(k => k.startsWith("user_"))
-    .forEach(k => {
-      const u = k.replace("user_","");
-      userList.innerHTML += `
-        <div class="admin-user">
-          <span>${u}</span>
-          <button onclick="delUser('${u}')">삭제</button>
-        </div>`;
-    });
-}
-
-function closeAdmin() {
-  adminPanel.style.display = "none";
-}
-
-function delUser(u) {
-  if (!confirm(u + " 삭제?")) return;
-  localStorage.removeItem("user_" + u);
-  openAdmin();
+/* ===== DEV MODE ===== */
+function toggleDev() {
+  devPanel.style.display =
+    devPanel.style.display === "block" ? "none" : "block";
 }
 
 if (localStorage.getItem("user")) start();
