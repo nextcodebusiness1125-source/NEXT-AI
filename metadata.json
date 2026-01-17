@@ -1,8 +1,0 @@
-{
-  "name": "NEXT AI",
-  "description": "Intelligence Beyond Limits - Next-Gen AI Interface.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
-}
